@@ -1,0 +1,8 @@
+<resources>
+    <color name="cozy_cream">#F7F2EA</color>
+    <color name="cozy_ink">#302C2A</color>
+    <color name="cozy_muted">#8E8580</color>
+    <color name="cozy_card">#FFFDF9</color>
+    <color name="cozy_dark">#171513</color>
+    <color name="cozy_dark_card">#25211E</color>
+</resources>
