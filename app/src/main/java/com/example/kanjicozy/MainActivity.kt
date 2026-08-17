@@ -478,7 +478,7 @@ private fun CollectionPage(
 
         if (indices.isEmpty()) {
             item {
-                InfoCard(empty)
+                InfoCard("Nothing here yet.", empty)
             }
         } else {
             items(indices) { index ->
@@ -557,6 +557,7 @@ private fun ReviewPage(
         if (review.isEmpty()) {
             item {
                 InfoCard(
+                    "Review",
                     "Your review queue is empty."
                 )
             }
