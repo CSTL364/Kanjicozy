@@ -4,36 +4,40 @@
     android:gravity="center"
     android:orientation="vertical"
     android:background="@android:color/transparent"
-    android:padding="5dp">
+    android:padding="4dp">
 
     <TextView
         android:id="@+id/widget_kanji"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="静"
-        android:textSize="32sp"
+        android:textSize="28sp"
         android:textColor="#302C2A"
         android:includeFontPadding="false"
-        android:maxLines="1" />
+        android:maxLines="1"
+        android:ellipsize="none" />
 
     <TextView
         android:id="@+id/widget_reading"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="しずか"
         android:textSize="10sp"
         android:textColor="#8E8580"
         android:maxLines="1"
         android:ellipsize="end"
         android:includeFontPadding="false"
-        android:layout_marginTop="1dp" />
+        android:layout_marginTop="2dp" />
 
     <TextView
         android:id="@+id/widget_translation"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="quiet"
-        android:textSize="8sp"
+        android:textSize="9sp"
         android:textColor="#AAA29B"
         android:maxLines="1"
         android:ellipsize="end"
