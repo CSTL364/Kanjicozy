@@ -60,11 +60,31 @@ fun KanjiCozyApp(activity: ComponentActivity) {
         mutableStateOf(KanjiStore.showTranslation(context))
     }
 
-    var refresh by remember { mutableIntStateOf(0) }
+    var favorite by remember {
+        mutableStateOf(
+            KanjiStore.isFavorite(
+                context,
+                KanjiStore.currentIndex(context)
+            )
+        )
+    }
+
+    var learned by remember {
+        mutableStateOf(
+            KanjiStore.isLearned(
+                context,
+                KanjiStore.currentIndex(context)
+            )
+        )
+    }
 
     fun refreshData() {
         kanji = KanjiStore.current(context)
-        refresh++
+
+        val index = KanjiStore.currentIndex(context)
+
+        favorite = KanjiStore.isFavorite(context, index)
+        learned = KanjiStore.isLearned(context, index)
     }
 
     MaterialTheme(
@@ -125,18 +145,12 @@ fun KanjiCozyApp(activity: ComponentActivity) {
                             kanji = kanji,
                             reading = reading,
                             translation = translation,
-                            learned = KanjiStore.isLearned(
-                                context,
-                                KanjiStore.currentIndex(context)
-                            ),
-                            favorite = KanjiStore.isFavorite(
-                                context,
-                                KanjiStore.currentIndex(context)
-                            ),
+                            learned = learned,
+                            favorite = favorite,
                             onNext = {
-                                kanji = KanjiStore.advance(context)
+                                KanjiStore.advance(context)
+                                refreshData()
                                 KanjiWidgetProvider.updateAll(context)
-                                refresh++
                             },
                             onLearned = {
                                 KanjiStore.markLearned(
@@ -146,11 +160,10 @@ fun KanjiCozyApp(activity: ComponentActivity) {
                                 refreshData()
                             },
                             onFavorite = {
-                                KanjiStore.toggleFavorite(
+                                favorite = KanjiStore.toggleFavorite(
                                     context,
                                     KanjiStore.currentIndex(context)
                                 )
-                                refreshData()
                             }
                         )
 
@@ -262,6 +275,13 @@ fun KanjiCozyApp(activity: ComponentActivity) {
                         onClick = { page = 4 },
                         icon = { Text("↻", fontSize = 19.sp) },
                         label = { Text("Review") }
+                    )
+
+                    NavigationBarItem(
+                        selected = page == 5,
+                        onClick = { page = 5 },
+                        icon = { Text("◈", fontSize = 19.sp) },
+                        label = { Text("Widget") }
                     )
                 }
             }
