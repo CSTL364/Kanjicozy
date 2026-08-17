@@ -135,18 +135,12 @@ class KanjiWidgetProvider : AppWidgetProvider() {
 
             views.setTextViewText(
                 R.id.widget_reading,
-                if (KanjiStore.showReading(context))
-                    kanji.reading
-                else
-                    ""
+                kanji.reading
             )
 
             views.setTextViewText(
                 R.id.widget_translation,
-                if (KanjiStore.showTranslation(context))
-                    kanji.meaning
-                else
-                    ""
+                kanji.meaning
             )
 
             val textColor =
@@ -179,103 +173,54 @@ class KanjiWidgetProvider : AppWidgetProvider() {
         private fun getWallpaperTextColor(
             context: Context
         ): Int {
-            val drawable = WallpaperManager
-                .getInstance(context)
-                .drawable ?: return Color.WHITE
+            if (android.os.Build.VERSION.SDK_INT >= 27) {
+                val colors = WallpaperManager
+                    .getInstance(context)
+                    .getWallpaperColors(
+                        WallpaperManager.FLAG_SYSTEM
+                    )
 
-            val bitmap = drawableToBitmap(drawable)
+                val color = colors?.primaryColor?.toArgb()
+                    ?: return Color.WHITE
 
-            val scaled = Bitmap.createScaledBitmap(
-                bitmap,
-                1,
-                1,
-                true
-            )
+                return if (isDark(color))
+                    Color.WHITE
+                else
+                    Color.rgb(35, 32, 30)
+            }
 
-            val pixel = scaled.getPixel(0, 0)
-
-            val luminance =
-                Color.red(pixel) * 0.299 +
-                Color.green(pixel) * 0.587 +
-                Color.blue(pixel) * 0.114
-
-            bitmap.recycle()
-            scaled.recycle()
-
-            return if (luminance < 128)
-                Color.WHITE
-            else
-                Color.rgb(35, 32, 30)
+            return Color.WHITE
         }
 
         private fun getWallpaperSecondaryColor(
             context: Context
         ): Int {
-            val drawable = WallpaperManager
-                .getInstance(context)
-                .drawable ?: return Color.LTGRAY
+            if (android.os.Build.VERSION.SDK_INT >= 27) {
+                val colors = WallpaperManager
+                    .getInstance(context)
+                    .getWallpaperColors(
+                        WallpaperManager.FLAG_SYSTEM
+                    )
 
-            val bitmap = drawableToBitmap(drawable)
+                val color = colors?.primaryColor?.toArgb()
+                    ?: return Color.LTGRAY
 
-            val scaled = Bitmap.createScaledBitmap(
-                bitmap,
-                1,
-                1,
-                true
-            )
+                return if (isDark(color))
+                    Color.rgb(220, 220, 220)
+                else
+                    Color.rgb(90, 85, 80)
+            }
 
-            val pixel = scaled.getPixel(0, 0)
-
-            val luminance =
-                Color.red(pixel) * 0.299 +
-                Color.green(pixel) * 0.587 +
-                Color.blue(pixel) * 0.114
-
-            bitmap.recycle()
-            scaled.recycle()
-
-            return if (luminance < 128)
-                Color.rgb(220, 220, 220)
-            else
-                Color.rgb(90, 85, 80)
+            return Color.LTGRAY
         }
 
-        private fun drawableToBitmap(
-            drawable: Drawable
-        ): Bitmap {
+        private fun isDark(color: Int): Boolean {
+            val luminance =
+                Color.red(color) * 0.299 +
+                Color.green(color) * 0.587 +
+                Color.blue(color) * 0.114
 
-            val width =
-                if (drawable.intrinsicWidth > 0)
-                    drawable.intrinsicWidth
-                else
-                    100
-
-            val height =
-                if (drawable.intrinsicHeight > 0)
-                    drawable.intrinsicHeight
-                else
-                    100
-
-            val bitmap =
-                Bitmap.createBitmap(
-                    width,
-                    height,
-                    Bitmap.Config.ARGB_8888
-                )
-
-            val canvas =
-                Canvas(bitmap)
-
-            drawable.setBounds(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            )
-
-            drawable.draw(canvas)
-
-            return bitmap
+            return luminance < 145
         }
 
         fun schedule(context: Context) {
