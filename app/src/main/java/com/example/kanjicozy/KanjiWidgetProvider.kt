@@ -109,7 +109,7 @@ class KanjiWidgetProvider : AppWidgetProvider() {
 
             val layout =
                 when {
-                    width < 150 || height < 90 ->
+                    width < 150 && height < 90 ->
                         R.layout.kanji_widget_small
 
                     width < 260 || height < 160 ->
