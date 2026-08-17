@@ -2,11 +2,17 @@ package com.example.kanjicozy
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.os.Bundle
 import android.os.SystemClock
 import android.widget.RemoteViews
 
@@ -23,9 +29,9 @@ class KanjiWidgetProvider : AppWidgetProvider() {
 
     override fun onAppWidgetOptionsChanged(
         context: Context,
-        appWidgetManager: AppWidgetManager,
+        manager: AppWidgetManager,
         appWidgetId: Int,
-        newOptions: android.os.Bundle
+        newOptions: Bundle
     ) {
         updateWidget(context, appWidgetId)
     }
@@ -35,11 +41,16 @@ class KanjiWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onDisabled(context: Context) {
-        val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarm =
+            context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
         alarm.cancel(pendingIntent(context))
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent
+    ) {
         if (intent.action == ACTION_TICK) {
             KanjiStore.advance(context)
             updateAll(context)
@@ -50,18 +61,23 @@ class KanjiWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
+
         private const val ACTION_TICK =
             "com.example.kanjicozy.TICK"
 
         fun updateAll(context: Context) {
-            val manager = AppWidgetManager.getInstance(context)
 
-            val component = ComponentName(
-                context,
-                KanjiWidgetProvider::class.java
-            )
+            val manager =
+                AppWidgetManager.getInstance(context)
 
-            val ids = manager.getAppWidgetIds(component)
+            val component =
+                ComponentName(
+                    context,
+                    KanjiWidgetProvider::class.java
+                )
+
+            val ids =
+                manager.getAppWidgetIds(component)
 
             ids.forEach {
                 updateWidget(context, it)
@@ -72,36 +88,45 @@ class KanjiWidgetProvider : AppWidgetProvider() {
             context: Context,
             widgetId: Int
         ) {
-            val manager = AppWidgetManager.getInstance(context)
-            val options = manager.getAppWidgetOptions(widgetId)
 
-            val width = options.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,
-                180
-            )
+            val manager =
+                AppWidgetManager.getInstance(context)
 
-            val height = options.getInt(
-                AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,
-                110
-            )
+            val options =
+                manager.getAppWidgetOptions(widgetId)
 
-            val layout = when {
-                width < 180 || height < 100 ->
-                    R.layout.kanji_widget_small
+            val width =
+                options.getInt(
+                    AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,
+                    110
+                )
 
-                width < 280 || height < 170 ->
-                    R.layout.kanji_widget_medium
+            val height =
+                options.getInt(
+                    AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,
+                    70
+                )
 
-                else ->
-                    R.layout.kanji_widget_large
-            }
+            val layout =
+                when {
+                    width < 150 || height < 90 ->
+                        R.layout.kanji_widget_small
 
-            val kanji = KanjiStore.current(context)
+                    width < 260 || height < 160 ->
+                        R.layout.kanji_widget_medium
 
-            val views = RemoteViews(
-                context.packageName,
-                layout
-            )
+                    else ->
+                        R.layout.kanji_widget_large
+                }
+
+            val views =
+                RemoteViews(
+                    context.packageName,
+                    layout
+                )
+
+            val kanji =
+                KanjiStore.current(context)
 
             views.setTextViewText(
                 R.id.widget_kanji,
@@ -124,18 +149,162 @@ class KanjiWidgetProvider : AppWidgetProvider() {
                     ""
             )
 
-            manager.updateAppWidget(widgetId, views)
+            val textColor =
+                getWallpaperTextColor(context)
+
+            val secondaryColor =
+                getWallpaperSecondaryColor(context)
+
+            views.setTextColor(
+                R.id.widget_kanji,
+                textColor
+            )
+
+            views.setTextColor(
+                R.id.widget_reading,
+                secondaryColor
+            )
+
+            views.setTextColor(
+                R.id.widget_translation,
+                secondaryColor
+            )
+
+            manager.updateAppWidget(
+                widgetId,
+                views
+            )
+        }
+
+        private fun getWallpaperTextColor(
+            context: Context
+        ): Int {
+
+            val wallpaper =
+                WallpaperManager
+                    .getInstance(context)
+                    .drawable
+
+            val bitmap =
+                drawableToBitmap(wallpaper)
+
+            val scaled =
+                Bitmap.createScaledBitmap(
+                    bitmap,
+                    1,
+                    1,
+                    true
+                )
+
+            val pixel =
+                scaled.getPixel(0, 0)
+
+            val luminance =
+                (
+                    Color.red(pixel) * 0.299 +
+                    Color.green(pixel) * 0.587 +
+                    Color.blue(pixel) * 0.114
+                )
+
+            bitmap.recycle()
+            scaled.recycle()
+
+            return if (luminance < 128)
+                Color.WHITE
+            else
+                Color.rgb(35, 32, 30)
+        }
+
+        private fun getWallpaperSecondaryColor(
+            context: Context
+        ): Int {
+
+            val wallpaper =
+                WallpaperManager
+                    .getInstance(context)
+                    .drawable
+
+            val bitmap =
+                drawableToBitmap(wallpaper)
+
+            val scaled =
+                Bitmap.createScaledBitmap(
+                    bitmap,
+                    1,
+                    1,
+                    true
+                )
+
+            val pixel =
+                scaled.getPixel(0, 0)
+
+            val luminance =
+                (
+                    Color.red(pixel) * 0.299 +
+                    Color.green(pixel) * 0.587 +
+                    Color.blue(pixel) * 0.114
+                )
+
+            bitmap.recycle()
+            scaled.recycle()
+
+            return if (luminance < 128)
+                Color.rgb(220, 220, 220)
+            else
+                Color.rgb(90, 85, 80)
+        }
+
+        private fun drawableToBitmap(
+            drawable: Drawable
+        ): Bitmap {
+
+            val width =
+                if (drawable.intrinsicWidth > 0)
+                    drawable.intrinsicWidth
+                else
+                    100
+
+            val height =
+                if (drawable.intrinsicHeight > 0)
+                    drawable.intrinsicHeight
+                else
+                    100
+
+            val bitmap =
+                Bitmap.createBitmap(
+                    width,
+                    height,
+                    Bitmap.Config.ARGB_8888
+                )
+
+            val canvas =
+                Canvas(bitmap)
+
+            drawable.setBounds(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            )
+
+            drawable.draw(canvas)
+
+            return bitmap
         }
 
         fun schedule(context: Context) {
+
             val alarm =
-                context.getSystemService(Context.ALARM_SERVICE)
-                    as AlarmManager
+                context.getSystemService(
+                    Context.ALARM_SERVICE
+                ) as AlarmManager
 
             val intervalMs =
                 KanjiStore.interval(context) * 60_000L
 
-            alarm.cancel(pendingIntent(context))
+            alarm.cancel(
+                pendingIntent(context)
+            )
 
             alarm.setInexactRepeating(
                 AlarmManager.ELAPSED_REALTIME,
@@ -148,10 +317,12 @@ class KanjiWidgetProvider : AppWidgetProvider() {
         private fun pendingIntent(
             context: Context
         ): PendingIntent {
-            val intent = Intent(
-                context,
-                KanjiWidgetProvider::class.java
-            ).setAction(ACTION_TICK)
+
+            val intent =
+                Intent(
+                    context,
+                    KanjiWidgetProvider::class.java
+                ).setAction(ACTION_TICK)
 
             return PendingIntent.getBroadcast(
                 context,
