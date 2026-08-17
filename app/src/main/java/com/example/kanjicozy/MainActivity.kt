@@ -78,6 +78,8 @@ fun KanjiCozyApp(activity: ComponentActivity) {
         )
     }
 
+    var refresh by remember { mutableIntStateOf(0) }
+
     fun refreshData() {
         kanji = KanjiStore.current(context)
 
@@ -85,6 +87,7 @@ fun KanjiCozyApp(activity: ComponentActivity) {
 
         favorite = KanjiStore.isFavorite(context, index)
         learned = KanjiStore.isLearned(context, index)
+        refresh++
     }
 
     MaterialTheme(
