@@ -179,32 +179,25 @@ class KanjiWidgetProvider : AppWidgetProvider() {
         private fun getWallpaperTextColor(
             context: Context
         ): Int {
+            val drawable = WallpaperManager
+                .getInstance(context)
+                .drawable ?: return Color.WHITE
 
-            val wallpaper =
-                WallpaperManager
-                    .getInstance(context)
-                    .drawable
+            val bitmap = drawableToBitmap(drawable)
 
-            val bitmap =
-                drawableToBitmap(wallpaper)
+            val scaled = Bitmap.createScaledBitmap(
+                bitmap,
+                1,
+                1,
+                true
+            )
 
-            val scaled =
-                Bitmap.createScaledBitmap(
-                    bitmap,
-                    1,
-                    1,
-                    true
-                )
-
-            val pixel =
-                scaled.getPixel(0, 0)
+            val pixel = scaled.getPixel(0, 0)
 
             val luminance =
-                (
-                    Color.red(pixel) * 0.299 +
-                    Color.green(pixel) * 0.587 +
-                    Color.blue(pixel) * 0.114
-                )
+                Color.red(pixel) * 0.299 +
+                Color.green(pixel) * 0.587 +
+                Color.blue(pixel) * 0.114
 
             bitmap.recycle()
             scaled.recycle()
@@ -218,32 +211,25 @@ class KanjiWidgetProvider : AppWidgetProvider() {
         private fun getWallpaperSecondaryColor(
             context: Context
         ): Int {
+            val drawable = WallpaperManager
+                .getInstance(context)
+                .drawable ?: return Color.LTGRAY
 
-            val wallpaper =
-                WallpaperManager
-                    .getInstance(context)
-                    .drawable
+            val bitmap = drawableToBitmap(drawable)
 
-            val bitmap =
-                drawableToBitmap(wallpaper)
+            val scaled = Bitmap.createScaledBitmap(
+                bitmap,
+                1,
+                1,
+                true
+            )
 
-            val scaled =
-                Bitmap.createScaledBitmap(
-                    bitmap,
-                    1,
-                    1,
-                    true
-                )
-
-            val pixel =
-                scaled.getPixel(0, 0)
+            val pixel = scaled.getPixel(0, 0)
 
             val luminance =
-                (
-                    Color.red(pixel) * 0.299 +
-                    Color.green(pixel) * 0.587 +
-                    Color.blue(pixel) * 0.114
-                )
+                Color.red(pixel) * 0.299 +
+                Color.green(pixel) * 0.587 +
+                Color.blue(pixel) * 0.114
 
             bitmap.recycle()
             scaled.recycle()
