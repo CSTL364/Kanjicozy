@@ -1,14 +1,9 @@
 # Kanji Cozy
 
-A cozy Kotlin Android kanji widget.
-
+simple app i guess.. uhh features? not much
 Features:
-- Rounded, cozy app UI
-- Light and dark mode
-- Home screen widget
-- Centered kanji
-- Optional hiragana and darker translation
-- Adjustable interval from 5 minutes to 24 hours
-- GitHub Actions APK build
-
-The project is designed around Android Gradle Plugin 7.4.2 and Gradle 7.5+ compatibility.
+- Rounded, cozy app UI c:
+- Light and dark mode hehe
+- Home screen widget!
+- chaeng interval from 5 minoot to 24 hours
+- built solely on github actions so uh.. yeah.
