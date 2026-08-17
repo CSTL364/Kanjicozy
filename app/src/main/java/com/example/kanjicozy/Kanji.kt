@@ -1,6 +1,10 @@
 package com.example.kanjicozy
 
-data class Kanji(val character: String, val reading: String, val meaning: String)
+data class Kanji(
+    val character: String,
+    val reading: String,
+    val meaning: String
+)
 
 object KanjiBank {
     val all = listOf(

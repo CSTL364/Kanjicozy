@@ -143,6 +143,22 @@ class KanjiWidgetProvider : AppWidgetProvider() {
                 kanji.meaning
             )
 
+            views.setViewVisibility(
+                R.id.widget_reading,
+                if (KanjiStore.showReading(context))
+                    android.view.View.VISIBLE
+                else
+                    android.view.View.GONE
+            )
+
+            views.setViewVisibility(
+                R.id.widget_translation,
+                if (KanjiStore.showTranslation(context))
+                    android.view.View.VISIBLE
+                else
+                    android.view.View.GONE
+            )
+
             val textColor =
                 getWallpaperTextColor(context)
 

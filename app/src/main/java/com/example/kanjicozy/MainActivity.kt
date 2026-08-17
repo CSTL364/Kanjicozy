@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,11 +18,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+
+private val Bg = Color(0xFF121212)
+private val Surface = Color(0xFF181818)
+private val Card = Color(0xFF242424)
+private val TextPrimary = Color.White
+private val TextSecondary = Color(0xFFB3B3B3)
+private val Divider = Color(0xFF2A2A2A)
+private val Accent = Color(0xFF1DB954)
+private val Learning = Color(0xFFFFB84D)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { KanjiCozyApp(this) }
+
+        setContent {
+            KanjiCozyApp(this)
+        }
     }
 }
 
@@ -29,82 +43,76 @@ class MainActivity : ComponentActivity() {
 fun KanjiCozyApp(activity: ComponentActivity) {
     val context = activity
 
-    var page by remember { mutableStateOf(0) }
-    var dark by remember { mutableStateOf(false) }
-    var interval by remember { mutableFloatStateOf(KanjiStore.interval(context).toFloat()) }
-    var reading by remember { mutableStateOf(KanjiStore.showReading(context)) }
-    var translation by remember { mutableStateOf(KanjiStore.showTranslation(context)) }
+    var page by remember { mutableIntStateOf(0) }
     var kanji by remember { mutableStateOf(KanjiStore.current(context)) }
 
-    val bg = if (dark) Color(0xFF141210) else Color(0xFFF7F2EA)
-    val card = if (dark) Color(0xFF25211E) else Color(0xFFFFFCF7)
-    val ink = if (dark) Color(0xFFF4EEE7) else Color(0xFF302C2A)
-    val muted = if (dark) Color(0xFFA69C95) else Color(0xFF8E8580)
+    var interval by remember {
+        mutableFloatStateOf(
+            KanjiStore.interval(context).toFloat()
+        )
+    }
+
+    var reading by remember {
+        mutableStateOf(KanjiStore.showReading(context))
+    }
+
+    var translation by remember {
+        mutableStateOf(KanjiStore.showTranslation(context))
+    }
+
+    var refresh by remember { mutableIntStateOf(0) }
+
+    fun refreshData() {
+        kanji = KanjiStore.current(context)
+        refresh++
+    }
 
     MaterialTheme(
-        colorScheme = if (dark) {
-            darkColorScheme(
-                background = bg,
-                surface = card,
-                onBackground = ink,
-                onSurface = ink,
-                primary = Color(0xFFD8C1A5)
-            )
-        } else {
-            lightColorScheme(
-                background = bg,
-                surface = card,
-                onBackground = ink,
-                onSurface = ink,
-                primary = Color(0xFF806650)
-            )
-        }
+        colorScheme = darkColorScheme(
+            background = Bg,
+            surface = Surface,
+            surfaceVariant = Card,
+            primary = Accent,
+            secondary = Accent,
+            onBackground = TextPrimary,
+            onSurface = TextPrimary,
+            onSurfaceVariant = TextSecondary
+        )
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = bg
+            color = Bg
         ) {
             Column(Modifier.fillMaxSize()) {
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 22.dp, vertical = 20.dp)
-                ) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                "Kanji Cozy",
-                                fontSize = 29.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = ink
-                            )
-
-                            Text(
-                                when (page) {
-                                    0 -> "Your little kanji corner."
-                                    1 -> "Shape your widget."
-                                    else -> "Make it yours."
-                                },
-                                fontSize = 13.sp,
-                                color = muted
-                            )
-                        }
-
-                        Text(
-                            if (dark) "☾" else "☀",
-                            fontSize = 25.sp,
-                            color = ink,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { dark = !dark }
-                                .padding(10.dp)
+                        .padding(
+                            horizontal = 22.dp,
+                            vertical = 20.dp
                         )
-                    }
+                ) {
+                    Text(
+                        "KanjiCozy",
+                        fontSize = 29.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
+                    )
+
+                    Text(
+                        when (page) {
+                            0 -> "Your daily kanji."
+                            1 -> "Still learning."
+                            2 -> "Already learned."
+                            3 -> "Your favorites."
+                            4 -> "Time for review."
+                            5 -> "Widget settings."
+                            else -> "Make it yours."
+                        },
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
                 }
 
                 Box(
@@ -114,55 +122,112 @@ fun KanjiCozyApp(activity: ComponentActivity) {
                 ) {
                     when (page) {
                         0 -> HomePage(
-                            card = card,
-                            ink = ink,
-                            muted = muted,
                             kanji = kanji,
                             reading = reading,
                             translation = translation,
+                            learned = KanjiStore.isLearned(
+                                context,
+                                KanjiStore.currentIndex(context)
+                            ),
+                            favorite = KanjiStore.isFavorite(
+                                context,
+                                KanjiStore.currentIndex(context)
+                            ),
                             onNext = {
                                 kanji = KanjiStore.advance(context)
                                 KanjiWidgetProvider.updateAll(context)
+                                refresh++
                             },
-                            onWidget = { page = 1 }
+                            onLearned = {
+                                KanjiStore.markLearned(
+                                    context,
+                                    KanjiStore.currentIndex(context)
+                                )
+                                refreshData()
+                            },
+                            onFavorite = {
+                                KanjiStore.toggleFavorite(
+                                    context,
+                                    KanjiStore.currentIndex(context)
+                                )
+                                refreshData()
+                            }
                         )
 
-                        1 -> WidgetPage(
-                            card = card,
-                            ink = ink,
-                            muted = muted,
+                        1 -> CollectionPage(
+                            title = "Learning",
+                            subtitle = "Kanji you're still working on.",
+                            indices = KanjiStore.learning(context),
+                            accent = Learning,
+                            empty = "Nothing here yet."
+                        )
+
+                        2 -> CollectionPage(
+                            title = "Learned",
+                            subtitle = "Kanji you've completed.",
+                            indices = KanjiStore.learned(context),
+                            accent = Accent,
+                            empty = "Mark a kanji as learned and it'll appear here."
+                        )
+
+                        3 -> CollectionPage(
+                            title = "Favorites",
+                            subtitle = "Kanji you've saved.",
+                            indices = KanjiStore.favorites(context),
+                            accent = Accent,
+                            empty = "Tap the star on a kanji to save it."
+                        )
+
+                        4 -> ReviewPage(
+                            context = context,
+                            refresh = refresh,
+                            onRefresh = {
+                                refreshData()
+                            }
+                        )
+
+                        5 -> WidgetPage(
                             interval = interval,
                             reading = reading,
                             translation = translation,
                             onInterval = {
                                 interval = it
-                                KanjiStore.setInterval(context, it.toLong())
+                                KanjiStore.setInterval(
+                                    context,
+                                    it.toLong()
+                                )
                                 KanjiWidgetProvider.schedule(context)
                             },
                             onReading = {
                                 reading = it
-                                KanjiStore.setShowReading(context, it)
+                                KanjiStore.setShowReading(
+                                    context,
+                                    it
+                                )
                                 KanjiWidgetProvider.updateAll(context)
                             },
                             onTranslation = {
                                 translation = it
-                                KanjiStore.setShowTranslation(context, it)
+                                KanjiStore.setShowTranslation(
+                                    context,
+                                    it
+                                )
                                 KanjiWidgetProvider.updateAll(context)
                             }
                         )
 
-                        2 -> SettingsPage(
-                            card = card,
-                            ink = ink,
-                            muted = muted,
-                            dark = dark,
-                            onDark = { dark = it }
+                        6 -> SettingsPage(
+                            context = context,
+                            refresh = refresh,
+                            onRefresh = {
+                                refreshData()
+                            }
                         )
                     }
                 }
 
                 NavigationBar(
-                    containerColor = card
+                    containerColor = Surface
                 ) {
                     NavigationBarItem(
                         selected = page == 0,
@@ -174,15 +239,29 @@ fun KanjiCozyApp(activity: ComponentActivity) {
                     NavigationBarItem(
                         selected = page == 1,
                         onClick = { page = 1 },
-                        icon = { Text("◈", fontSize = 20.sp) },
-                        label = { Text("Widget") }
+                        icon = { Text("◌", fontSize = 20.sp) },
+                        label = { Text("Learning") }
                     )
 
                     NavigationBarItem(
                         selected = page == 2,
                         onClick = { page = 2 },
-                        icon = { Text("⚙", fontSize = 19.sp) },
-                        label = { Text("Settings") }
+                        icon = { Text("✓", fontSize = 19.sp) },
+                        label = { Text("Learned") }
+                    )
+
+                    NavigationBarItem(
+                        selected = page == 3,
+                        onClick = { page = 3 },
+                        icon = { Text("★", fontSize = 19.sp) },
+                        label = { Text("Favorites") }
+                    )
+
+                    NavigationBarItem(
+                        selected = page == 4,
+                        onClick = { page = 4 },
+                        icon = { Text("↻", fontSize = 19.sp) },
+                        label = { Text("Review") }
                     )
                 }
             }
@@ -192,45 +271,51 @@ fun KanjiCozyApp(activity: ComponentActivity) {
 
 @Composable
 private fun HomePage(
-    card: Color,
-    ink: Color,
-    muted: Color,
     kanji: Kanji,
     reading: Boolean,
     translation: Boolean,
+    learned: Boolean,
+    favorite: Boolean,
     onNext: () -> Unit,
-    onWidget: () -> Unit
+    onLearned: () -> Unit,
+    onFavorite: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
+        verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         item {
-            Text("Today's kanji", color = muted, fontSize = 13.sp)
+            Text(
+                "Today's kanji",
+                color = TextSecondary,
+                fontSize = 13.sp
+            )
 
             Spacer(Modifier.height(8.dp))
 
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .height(300.dp)
-                    .clip(RoundedCornerShape(34.dp))
-                    .background(card)
+                    .height(310.dp)
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(Card)
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     kanji.character,
-                    fontSize = 82.sp,
-                    color = ink
+                    fontSize = 86.sp,
+                    color = TextPrimary
                 )
 
                 if (reading) {
                     Text(
                         kanji.reading,
                         fontSize = 18.sp,
-                        color = muted
+                        color = TextSecondary
                     )
                 }
 
@@ -238,52 +323,319 @@ private fun HomePage(
                     Text(
                         kanji.meaning,
                         fontSize = 13.sp,
-                        color = muted.copy(alpha = .65f)
+                        color = TextSecondary
                     )
                 }
+
+                Spacer(Modifier.height(15.dp))
+
+                Text(
+                    if (learned) "✓ Learned" else "Learning",
+                    color = if (learned) Accent else Learning,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
 
         item {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 Button(
-                    onClick = onNext,
-                    modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(18.dp)
+                    onClick = onLearned,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(17.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Accent
+                    )
                 ) {
-                    Text("Next kanji")
+                    Text(
+                        if (learned) "Learned" else "Mark learned"
+                    )
                 }
 
                 OutlinedButton(
-                    onClick = onWidget,
-                    modifier = Modifier.weight(1f).height(52.dp),
-                    shape = RoundedCornerShape(18.dp)
+                    onClick = onFavorite,
+                    modifier = Modifier
+                        .width(65.dp)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(17.dp)
                 ) {
-                    Text("Customize")
+                    Text(
+                        if (favorite) "★" else "☆",
+                        fontSize = 20.sp
+                    )
                 }
             }
         }
 
         item {
-            InfoCard(
-                card,
-                ink,
-                muted,
-                "Home screen widget",
-                "Your kanji changes automatically on your launcher."
+            Button(
+                onClick = onNext,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(17.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Card
+                )
+            ) {
+                Text("Next kanji", color = TextPrimary)
+            }
+        }
+
+        item {
+            ProgressCard()
+        }
+    }
+}
+
+@Composable
+private fun ProgressCard() {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(Surface)
+            .padding(18.dp)
+    ) {
+        Text(
+            "Progress",
+            color = TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Stat("Learning", KanjiStore.learningCount(LocalContext.current), Learning)
+            Stat("Learned", KanjiStore.learnedCount(LocalContext.current), Accent)
+            Stat("Favorites", KanjiStore.favoriteCount(LocalContext.current), Accent)
+        }
+    }
+}
+
+@Composable
+private fun Stat(
+    label: String,
+    value: Int,
+    color: Color
+) {
+    Column {
+        Text(
+            value.toString(),
+            color = color,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            label,
+            color = TextSecondary,
+            fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+private fun CollectionPage(
+    title: String,
+    subtitle: String,
+    indices: List<Int>,
+    accent: Color,
+    empty: String
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text(
+                title,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
             )
+
+            Text(
+                subtitle,
+                fontSize = 13.sp,
+                color = TextSecondary
+            )
+
+            Spacer(Modifier.height(8.dp))
+        }
+
+        if (indices.isEmpty()) {
+            item {
+                InfoCard(empty)
+            }
+        } else {
+            items(indices) { index ->
+                val kanji = KanjiBank.all[index]
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Card)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        kanji.character,
+                        fontSize = 40.sp,
+                        color = TextPrimary
+                    )
+
+                    Spacer(Modifier.width(16.dp))
+
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            kanji.reading,
+                            color = TextSecondary,
+                            fontSize = 14.sp
+                        )
+
+                        Text(
+                            kanji.meaning,
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Text(
+                        "●",
+                        color = accent,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewPage(
+    context: android.content.Context,
+    refresh: Int,
+    onRefresh: () -> Unit
+) {
+    val review = KanjiStore.review(context)
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text(
+                "Review",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
+
+            Text(
+                "${review.size} kanji ready for review.",
+                color = TextSecondary,
+                fontSize = 13.sp
+            )
+        }
+
+        if (review.isEmpty()) {
+            item {
+                InfoCard(
+                    "Your review queue is empty."
+                )
+            }
+        } else {
+            items(review) { index ->
+                val kanji = KanjiBank.all[index]
+
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Card)
+                        .padding(18.dp)
+                ) {
+                    Text(
+                        kanji.character,
+                        fontSize = 48.sp,
+                        color = TextPrimary
+                    )
+
+                    Text(
+                        kanji.reading,
+                        color = TextSecondary,
+                        fontSize = 14.sp
+                    )
+
+                    Text(
+                        kanji.meaning,
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                KanjiStore.markLearningAgain(
+                                    context,
+                                    index
+                                )
+                                KanjiStore.removeFromReview(
+                                    context,
+                                    index
+                                )
+                                onRefresh()
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Again")
+                        }
+
+                        Button(
+                            onClick = {
+                                KanjiStore.removeFromReview(
+                                    context,
+                                    index
+                                )
+                                onRefresh()
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Accent
+                            )
+                        ) {
+                            Text("Good")
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun WidgetPage(
-    card: Color,
-    ink: Color,
-    muted: Color,
     interval: Float,
     reading: Boolean,
     translation: Boolean,
@@ -292,70 +644,38 @@ private fun WidgetPage(
     onTranslation: (Boolean) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         item {
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(card)
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("静", fontSize = 64.sp, color = ink)
-
-                if (reading) {
-                    Text("しずか", fontSize = 16.sp, color = muted)
-                }
-
-                if (translation) {
-                    Text(
-                        "quiet",
-                        fontSize = 12.sp,
-                        color = muted.copy(alpha = .65f)
-                    )
-                }
-
-                Spacer(Modifier.height(7.dp))
-
-                Text(
-                    "Transparent widget preview",
-                    fontSize = 11.sp,
-                    color = muted
-                )
-            }
+            InfoCard(
+                "Widget",
+                "Your kanji changes automatically on your launcher."
+            )
         }
 
         item {
             Text(
                 "Change every ${interval.toInt()} min",
-                color = ink,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
+                color = TextPrimary,
+                fontSize = 16.sp
             )
 
             Slider(
                 value = interval,
                 onValueChange = onInterval,
-                valueRange = 5f..1440f
+                valueRange = 5f..1440f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Accent,
+                    activeTrackColor = Accent
+                )
             )
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("5 min", fontSize = 11.sp, color = muted)
-                Text("24 hours", fontSize = 11.sp, color = muted)
-            }
         }
 
         item {
             ToggleCard(
-                card,
-                ink,
-                muted,
                 "Hiragana",
                 "Show the Japanese reading.",
                 reading,
@@ -365,23 +685,10 @@ private fun WidgetPage(
 
         item {
             ToggleCard(
-                card,
-                ink,
-                muted,
                 "Translation",
-                "Show the darker translation.",
+                "Show the English meaning.",
                 translation,
                 onTranslation
-            )
-        }
-
-        item {
-            InfoCard(
-                card,
-                ink,
-                muted,
-                "Resizable widget",
-                "Small widgets show the kanji. Larger widgets reveal more information."
             )
         }
     }
@@ -389,45 +696,38 @@ private fun WidgetPage(
 
 @Composable
 private fun SettingsPage(
-    card: Color,
-    ink: Color,
-    muted: Color,
-    dark: Boolean,
-    onDark: (Boolean) -> Unit
+    context: android.content.Context,
+    refresh: Int,
+    onRefresh: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 22.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 22.dp),
         verticalArrangement = Arrangement.spacedBy(13.dp)
     ) {
         item {
-            ToggleCard(
-                card,
-                ink,
-                muted,
-                "Dark mode",
-                "Use the warm dark palette.",
-                dark,
-                onDark
+            InfoCard(
+                "KanjiCozy",
+                "A quiet kanji learning space for your phone."
+            )
+        }
+
+        item {
+            ProgressCard()
+        }
+
+        item {
+            InfoCard(
+                "Theme",
+                "KanjiCozy now uses a dark, Spotiflac-inspired interface."
             )
         }
 
         item {
             InfoCard(
-                card,
-                ink,
-                muted,
-                "Kanji Cozy",
-                "A small, quiet kanji widget for your home screen."
-            )
-        }
-
-        item {
-            InfoCard(
-                card,
-                ink,
-                muted,
-                "Widget sizes",
-                "Android lets you resize the widget horizontally and vertically."
+                "Storage",
+                "Learning progress, favorites and review data stay on your device."
             )
         }
     }
@@ -435,9 +735,6 @@ private fun SettingsPage(
 
 @Composable
 private fun ToggleCard(
-    card: Color,
-    ink: Color,
-    muted: Color,
     title: String,
     subtitle: String,
     checked: Boolean,
@@ -447,37 +744,38 @@ private fun ToggleCard(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(card)
+            .background(Card)
             .padding(18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
             Text(
                 title,
-                color = ink,
+                color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
             )
 
             Text(
                 subtitle,
-                color = muted,
+                color = TextSecondary,
                 fontSize = 12.sp
             )
         }
 
         Switch(
             checked = checked,
-            onCheckedChange = onChecked
+            onCheckedChange = onChecked,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Accent
+            )
         )
     }
 }
 
 @Composable
 private fun InfoCard(
-    card: Color,
-    ink: Color,
-    muted: Color,
     title: String,
     subtitle: String
 ) {
@@ -485,12 +783,12 @@ private fun InfoCard(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(22.dp))
-            .background(card)
+            .background(Card)
             .padding(18.dp)
     ) {
         Text(
             title,
-            color = ink,
+            color = TextPrimary,
             fontSize = 15.sp,
             fontWeight = FontWeight.Medium
         )
@@ -499,7 +797,7 @@ private fun InfoCard(
 
         Text(
             subtitle,
-            color = muted,
+            color = TextSecondary,
             fontSize = 12.sp
         )
     }
