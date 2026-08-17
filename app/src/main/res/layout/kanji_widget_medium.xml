@@ -1,0 +1,32 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@android:color/transparent"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_kanji"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="静"
+        android:textSize="48sp"
+        android:textColor="#302C2A"
+        android:includeFontPadding="false" />
+
+    <TextView
+        android:id="@+id/widget_reading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="しずか"
+        android:textSize="14sp"
+        android:textColor="#8E8580"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/widget_translation"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:text="" />
+</LinearLayout>

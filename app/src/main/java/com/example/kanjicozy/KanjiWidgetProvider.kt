@@ -21,6 +21,15 @@ class KanjiWidgetProvider : AppWidgetProvider() {
         schedule(context)
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: android.os.Bundle
+    ) {
+        updateWidget(context, appWidgetId)
+    }
+
     override fun onEnabled(context: Context) {
         schedule(context)
     }
@@ -41,50 +50,90 @@ class KanjiWidgetProvider : AppWidgetProvider() {
     }
 
     companion object {
-        private const val ACTION_TICK = "com.example.kanjicozy.TICK"
+        private const val ACTION_TICK =
+            "com.example.kanjicozy.TICK"
 
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
+
             val component = ComponentName(
                 context,
                 KanjiWidgetProvider::class.java
             )
 
             val ids = manager.getAppWidgetIds(component)
-            val kanji = KanjiStore.current(context)
 
-            ids.forEach { id ->
-                val views = RemoteViews(
-                    context.packageName,
-                    R.layout.kanji_widget
-                )
-
-                views.setTextViewText(
-                    R.id.widget_kanji,
-                    kanji.character
-                )
-
-                views.setTextViewText(
-                    R.id.widget_reading,
-                    if (KanjiStore.showReading(context))
-                        kanji.reading
-                    else ""
-                )
-
-                views.setTextViewText(
-                    R.id.widget_translation,
-                    if (KanjiStore.showTranslation(context))
-                        kanji.meaning
-                    else ""
-                )
-
-                manager.updateAppWidget(id, views)
+            ids.forEach {
+                updateWidget(context, it)
             }
         }
 
+        private fun updateWidget(
+            context: Context,
+            widgetId: Int
+        ) {
+            val manager = AppWidgetManager.getInstance(context)
+            val options = manager.getAppWidgetOptions(widgetId)
+
+            val width = options.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,
+                180
+            )
+
+            val height = options.getInt(
+                AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,
+                110
+            )
+
+            val layout = when {
+                width < 180 || height < 100 ->
+                    R.layout.kanji_widget_small
+
+                width < 280 || height < 170 ->
+                    R.layout.kanji_widget_medium
+
+                else ->
+                    R.layout.kanji_widget_large
+            }
+
+            val kanji = KanjiStore.current(context)
+
+            val views = RemoteViews(
+                context.packageName,
+                layout
+            )
+
+            views.setTextViewText(
+                R.id.widget_kanji,
+                kanji.character
+            )
+
+            views.setTextViewText(
+                R.id.widget_reading,
+                if (KanjiStore.showReading(context))
+                    kanji.reading
+                else
+                    ""
+            )
+
+            views.setTextViewText(
+                R.id.widget_translation,
+                if (KanjiStore.showTranslation(context))
+                    kanji.meaning
+                else
+                    ""
+            )
+
+            manager.updateAppWidget(widgetId, views)
+        }
+
         fun schedule(context: Context) {
-            val alarm = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intervalMs = KanjiStore.interval(context) * 60_000L
+            val alarm =
+                context.getSystemService(Context.ALARM_SERVICE)
+                    as AlarmManager
+
+            val intervalMs =
+                KanjiStore.interval(context) * 60_000L
 
             alarm.cancel(pendingIntent(context))
 
@@ -96,7 +145,9 @@ class KanjiWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        private fun pendingIntent(context: Context): PendingIntent {
+        private fun pendingIntent(
+            context: Context
+        ): PendingIntent {
             val intent = Intent(
                 context,
                 KanjiWidgetProvider::class.java
@@ -107,7 +158,7 @@ class KanjiWidgetProvider : AppWidgetProvider() {
                 77,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or
-                        PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_IMMUTABLE
             )
         }
     }
